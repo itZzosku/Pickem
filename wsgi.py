@@ -15,21 +15,23 @@ handler = logging.StreamHandler(sys.stderr)
 handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
+
 def initialize_updates():
-    with app.app_context():
-        logger.debug("Starting background updates initialization...")
-        try:
-            # Start periodic updates without waiting
-            logger.debug("Starting periodic updates...")
-            periodic_thread = threading.Thread(
-                target=lambda: periodic_update(app, 300),
-                daemon=True
-            )
-            periodic_thread.start()
-            
-            # Run initial update in another thread
-            logger.debug("Running initial update in background...")
-            def run_initial():
+    logger.debug("Starting background updates initialization...")
+    try:
+        # Start periodic updates without waiting
+        logger.debug("Starting periodic updates...")
+        periodic_thread = threading.Thread(
+            target=lambda: periodic_update(app, 300),
+            daemon=True
+        )
+        periodic_thread.start()
+
+        # Run initial update in another thread
+        logger.debug("Running initial update in background...")
+
+        def run_initial():
+            with app.app_context():
                 try:
                     run_async_update(DEFAULT_RAID_SLUG)
                     from updater import update_user_scores
@@ -37,12 +39,13 @@ def initialize_updates():
                     logger.debug("Initial update completed")
                 except Exception as e:
                     logger.error(f"Error during initial update: {str(e)}")
-            
-            initial_thread = threading.Thread(target=run_initial, daemon=True)
-            initial_thread.start()
-            
-        except Exception as e:
-            logger.error(f"Error during updates initialization: {str(e)}")
+
+        initial_thread = threading.Thread(target=run_initial, daemon=True)
+        initial_thread.start()
+
+    except Exception as e:
+        logger.error(f"Error during updates initialization: {str(e)}")
+
 
 try:
     # Test the app configuration
