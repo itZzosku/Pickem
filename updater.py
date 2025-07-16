@@ -65,46 +65,26 @@ def update_user_scores():
         db.session.rollback()
 
 
-def periodic_update(app, update_interval=300):
-    """Run periodic updates of rankings and scores"""
+def periodic_update(app, interval=300):
+    """Run periodic updates every interval seconds"""
+    import logging
+    logger = logging.getLogger(__name__)
+
     while True:
-        try:
-            with app.app_context():
-                if not os.environ.get('WERKZEUG_RUN_MAIN'):
-                    continue
-                
-                now = datetime.now(timezone.utc)
-                next_update = now + timedelta(seconds=update_interval)
-                
-                # Create or update status record
-                status = UpdateStatus.query.first()
-                if status is None:
-                    status = UpdateStatus(
-                        last_update=now,
-                        next_update=next_update
-                    )
-                    db.session.add(status)
-                else:
-                    status.last_update = now
-                    status.next_update = next_update
-                
-                print(f"\nStarting periodic update at {now}")
-                print(f"Next update scheduled for {next_update}")
-                
+        with app.app_context():
+            try:
+                logger.debug("Starting periodic update cycle...")
+
                 # Update rankings
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                loop.run_until_complete(update_rankings(DEFAULT_RAID_SLUG))
-                loop.close()
+                from app import run_async_update, DEFAULT_RAID_SLUG
+                run_async_update(DEFAULT_RAID_SLUG)
+                logger.debug("Rankings updated")
 
                 # Update scores
                 update_user_scores()
-                
-                # Make sure to commit the status changes
-                db.session.commit()
+                logger.debug("Scores updated")
 
-        except Exception as e:
-            print(f"Error in periodic update: {str(e)}")
-            db.session.rollback()
-        
-        time.sleep(update_interval)
+            except Exception as e:
+                logger.error(f"Error in periodic update: {str(e)}")
+
+        time.sleep(interval)
