@@ -192,16 +192,31 @@ def leaderboard():
     )
 
 
-@app.route("/admin")
+@app.route("/admin", methods=['GET', 'POST'])
 @login_required
 @admin_required
 def admin():
     from models import UserScore
+    from flask import request, flash
+    
+    # Handle force update
+    if request.method == 'POST' and 'force_update' in request.form:
+        def force_update():
+            with app.app_context():
+                run_async_update(DEFAULT_RAID_SLUG)
+                from updater import update_user_scores
+                update_user_scores()
+        
+        update_thread = threading.Thread(target=force_update)
+        update_thread.start()
+        flash("Force update initiated. Rankings will be updated shortly.")
+        return redirect(url_for('admin'))
+
+    # Existing admin panel code
     all_picks = Pick.query.all()
     picks_data = []
 
     for pick in all_picks:
-        # Get the user's latest score
         user_score = UserScore.query.filter_by(user_id=pick.user_id).first()
         score_value = user_score.score if user_score else 0
         score_updated = user_score.last_updated if user_score else None
@@ -216,10 +231,17 @@ def admin():
             "is_final": is_final
         })
 
-    # Sort by score (highest first)
     picks_data.sort(key=lambda x: x["score"], reverse=True)
+    
+    # Get update status
+    update_status = UpdateStatus.query.first()
+    next_update = update_status.next_update if update_status else None
+    last_update = update_status.last_update if update_status else None
 
-    return render_template("admin.html", picks=picks_data)
+    return render_template("admin.html", 
+                         picks=picks_data, 
+                         next_update=next_update,
+                         last_update=last_update)
 
 
 @app.route("/logout")

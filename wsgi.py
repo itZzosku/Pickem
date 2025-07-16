@@ -15,6 +15,7 @@ handler = logging.StreamHandler(sys.stderr)
 handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
+
 def initialize_updates():
     with app.app_context():
         logger.debug("Running initial update...")
@@ -31,17 +32,18 @@ def initialize_updates():
         except Exception as e:
             logger.error(f"Error during updates initialization: {str(e)}")
 
+
 try:
     # Test the app configuration
     logger.debug("Testing app configuration...")
     with app.app_context():
         logger.debug("Secret key present: %s", bool(app.secret_key))
         logger.debug("Database URI: %s", app.config["SQLALCHEMY_DATABASE_URI"])
-        
+
     # Start updates in a background thread - Note: NOT using daemon=True here
     update_thread = threading.Thread(target=initialize_updates)
     update_thread.start()
-    
+
 except Exception as e:
     logger.error("Error during startup: %s", str(e))
     raise e

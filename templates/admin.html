@@ -2,43 +2,118 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Admin Panel - Finnish Guilds Pick'em</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .admin-controls {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .update-button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .update-button:hover {
+            background: #45a049;
+        }
+
+        .flash-message {
+            padding: 10px;
+            margin: 10px 0;
+            background: #e3f2fd;
+            border: 1px solid #2196F3;
+            border-radius: 4px;
+            color: #0d47a1;
+        }
+
+        .update-status {
+            margin: 15px 0;
+            padding: 10px;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin-top: 20px;
         }
+
         th, td {
-            padding: 8px;
-            text-align: left;
+            padding: 10px;
             border: 1px solid #ddd;
+            text-align: left;
         }
+
         th {
-            background-color: #f2f2f2;
+            background-color: #f5f5f5;
         }
-        .final-score {
-            color: green;
-            font-weight: bold;
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
         }
-        .preliminary-score {
-            color: #666;
-            font-style: italic;
+
+        a {
+            color: #2196F3;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <h1>Admin Panel</h1>
+    
+    <div class="admin-controls">
+        <h2>Update Controls</h2>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="update-status">
+            <p>Last Update: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') if last_update else 'Never' }}</p>
+            <p>Next Scheduled Update: {{ next_update.strftime('%Y-%m-%d %H:%M:%S UTC') if next_update else 'Unknown' }}</p>
+        </div>
+
+        <form method="POST">
+            <button type="submit" name="force_update" value="1" class="update-button">
+                Force Update Now
+            </button>
+        </form>
+    </div>
+
+    <h2>User Picks</h2>
     <table>
         <thead>
             <tr>
-                <th>Username</th>
+                <th>User</th>
                 <th>Discord ID</th>
+                <th>Picks</th>
                 <th>Score</th>
                 <th>Last Updated</th>
-                <th>Status</th>
-                <th>Picks</th>
+                <th>Is Final</th>
             </tr>
         </thead>
         <tbody>
@@ -46,34 +121,15 @@
             <tr>
                 <td>{{ pick.user }}</td>
                 <td>{{ pick.discord_id }}</td>
-                <td class="{% if pick.is_final %}final-score{% else %}preliminary-score{% endif %}">
-                    {{ pick.score }}
-                </td>
-                <td>
-                    {% if pick.last_updated %}
-                        {{ pick.last_updated.strftime('%Y-%m-%d %H:%M:%S') }}
-                    {% else %}
-                        Not scored yet
-                    {% endif %}
-                </td>
-                <td>
-                    {% if pick.is_final %}
-                        Final
-                    {% else %}
-                        Preliminary
-                    {% endif %}
-                </td>
-                <td>
-                    <ol>
-                        {% for guild in pick.picks %}
-                            <li>{{ guild }}</li>
-                        {% endfor %}
-                    </ol>
-                </td>
+                <td>{{ pick.picks|join(', ') }}</td>
+                <td>{{ pick.score }}</td>
+                <td>{{ pick.last_updated.strftime('%Y-%m-%d %H:%M:%S UTC') if pick.last_updated else 'Never' }}</td>
+                <td>{{ 'Yes' if pick.is_final else 'No' }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
     <p><a href="{{ url_for('index') }}">Back to Home</a></p>
 </body>
 </html>
