@@ -16,19 +16,36 @@ handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
 
-def initialize_updates():
-    with app.app_context():
-        logger.debug("Running initial update...")
-        try:
-            # Run initial update
-            run_async_update(DEFAULT_RAID_SLUG)
-            from updater import update_user_scores
-            update_user_scores()
-            logger.debug("Initial update completed")
+def delayed_initialize_updates():
+    import time
+    time.sleep(10)  # Give the main application time to start
 
-            # Start periodic updates
+    with app.app_context():
+        logger.debug("Starting background updates initialization...")
+        try:
+            # Start periodic updates without waiting for initial update
             logger.debug("Starting periodic updates...")
-            periodic_update(app, 300)  # Update every 5 minutes
+            periodic_thread = threading.Thread(
+                target=lambda: periodic_update(app, 300),
+                daemon=True
+            )
+            periodic_thread.start()
+
+            # Run initial update in another thread
+            logger.debug("Running initial update in background...")
+
+            def run_initial():
+                try:
+                    run_async_update(DEFAULT_RAID_SLUG)
+                    from updater import update_user_scores
+                    update_user_scores()
+                    logger.debug("Initial update completed")
+                except Exception as e:
+                    logger.error(f"Error during initial update: {str(e)}")
+
+            initial_thread = threading.Thread(target=run_initial, daemon=True)
+            initial_thread.start()
+
         except Exception as e:
             logger.error(f"Error during updates initialization: {str(e)}")
 
@@ -40,9 +57,9 @@ try:
         logger.debug("Secret key present: %s", bool(app.secret_key))
         logger.debug("Database URI: %s", app.config["SQLALCHEMY_DATABASE_URI"])
 
-    # Start updates in a background thread - Note: NOT using daemon=True here
-    update_thread = threading.Thread(target=initialize_updates)
-    update_thread.start()
+    # Start the delayed initialization in a background thread
+    startup_thread = threading.Thread(target=delayed_initialize_updates, daemon=True)
+    startup_thread.start()
 
 except Exception as e:
     logger.error("Error during startup: %s", str(e))
