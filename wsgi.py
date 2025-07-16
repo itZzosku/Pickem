@@ -15,25 +15,20 @@ handler = logging.StreamHandler(sys.stderr)
 handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
-
-def delayed_initialize_updates():
-    import time
-    time.sleep(10)  # Give the main application time to start
-
+def initialize_updates():
     with app.app_context():
         logger.debug("Starting background updates initialization...")
         try:
-            # Start periodic updates without waiting for initial update
+            # Start periodic updates without waiting
             logger.debug("Starting periodic updates...")
             periodic_thread = threading.Thread(
                 target=lambda: periodic_update(app, 300),
                 daemon=True
             )
             periodic_thread.start()
-
+            
             # Run initial update in another thread
             logger.debug("Running initial update in background...")
-
             def run_initial():
                 try:
                     run_async_update(DEFAULT_RAID_SLUG)
@@ -42,13 +37,12 @@ def delayed_initialize_updates():
                     logger.debug("Initial update completed")
                 except Exception as e:
                     logger.error(f"Error during initial update: {str(e)}")
-
+            
             initial_thread = threading.Thread(target=run_initial, daemon=True)
             initial_thread.start()
-
+            
         except Exception as e:
             logger.error(f"Error during updates initialization: {str(e)}")
-
 
 try:
     # Test the app configuration
@@ -57,8 +51,8 @@ try:
         logger.debug("Secret key present: %s", bool(app.secret_key))
         logger.debug("Database URI: %s", app.config["SQLALCHEMY_DATABASE_URI"])
 
-    # Start the delayed initialization in a background thread
-    startup_thread = threading.Thread(target=delayed_initialize_updates, daemon=True)
+    # Start the initialization in a background thread
+    startup_thread = threading.Thread(target=initialize_updates, daemon=True)
     startup_thread.start()
 
 except Exception as e:

@@ -59,12 +59,6 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
-def delayed_initial_update():
-    time.sleep(5)  # Wait 5 seconds for everything to initialize
-    with app.app_context():
-        run_async_update(DEFAULT_RAID_SLUG)
-
-
 # Initialize everything within the app context
 with app.app_context():
     db.create_all()
@@ -87,7 +81,13 @@ with app.app_context():
     
     # Only run the initial update if this is the main process
     if not os.environ.get('WERKZEUG_RUN_MAIN'):
-        update_thread = threading.Thread(target=delayed_initial_update)
+        def run_initial():
+            with app.app_context():
+                run_async_update(DEFAULT_RAID_SLUG)
+                from updater import update_user_scores
+                update_user_scores()
+        
+        update_thread = threading.Thread(target=run_initial, daemon=True)
         update_thread.start()
 
 
@@ -289,7 +289,6 @@ if __name__ == "__main__":
             print("Initial update completed")
 
     def start_periodic_update():
-        time.sleep(5)  # Wait for app to initialize
         with app.app_context():
             print("Starting periodic update service...")
             periodic_update(app, 300)
