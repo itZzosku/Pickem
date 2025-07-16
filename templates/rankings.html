@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Finnish Guild Rankings</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .rankings-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .rankings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .rankings-table th,
+        .rankings-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        .rankings-table th {
+            background-color: #f5f5f5;
+        }
+        .rankings-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .last-updated {
+            text-align: right;
+            color: #666;
+            font-style: italic;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="rankings-container">
+        <h1>Top 25 Finnish Guilds</h1>
+        <table class="rankings-table">
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Guild</th>
+                    <th>Realm</th>
+                    <th>World Rank</th>
+                    <th>Mythic Bosses</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for guild in guilds %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ guild.name }}</td>
+                    <td>{{ guild.realm }}</td>
+                    <td>{{ guild.rank if guild.rank != 999999 else "N/A" }}</td>
+                    <td>{{ guild.mythic_bosses_killed }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if guilds %}
+        <div class="last-updated">
+            Last updated: {{ guilds[0].last_updated.strftime('%Y-%m-%d %H:%M UTC') }}
+        </div>
+        {% endif %}
+        <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+    </div>
+</body>
+</html>

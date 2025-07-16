@@ -1,0 +1,37 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Discord ID</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .id-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .discord-id {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 10px;
+            background: #fff;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="id-container">
+        <h1>My Discord Information</h1>
+        <p>Username: {{ user.discord_username }}</p>
+        <div class="discord-id">
+            Discord ID: {{ user.discord_id }}
+        </div>
+        <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+    </div>
+</body>
+</html>

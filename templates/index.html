@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Finnish Guilds Pick'em</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Welcome to Finnish Guilds Pick'em!</h1>
+
+    {% if user.is_authenticated %}
+        <p>Hello, {{ user.discord_username }}!</p>
+        <p><a href="{{ url_for('submit') }}">Make your picks</a></p>
+        <p><a href="{{ url_for('leaderboard') }}">View leaderboard</a></p>
+        <p><a href="{{ url_for('rankings') }}">View Guild Rankings</a></p>
+        <p><a href="{{ url_for('logout') }}">Logout</a></p>
+    {% else %}
+        <p><a href="{{ url_for('discord.login') }}">Login with Discord</a> to participate.</p>
+    {% endif %}
+    {% if current_user.is_authenticated and current_user.is_admin %}
+<div class="nav-item">
+    <a href="{{ url_for('admin') }}">Admin Panel</a>
+</div>
+{% endif %}
+{% if current_user.is_authenticated %}
+<div class="nav-item">
+    <a href="{{ url_for('my_id') }}">View My Discord ID</a>
+</div>
+{% endif %}
+</body>
+</html>

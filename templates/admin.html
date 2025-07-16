@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .final-score {
+            color: green;
+            font-weight: bold;
+        }
+        .preliminary-score {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Discord ID</th>
+                <th>Score</th>
+                <th>Last Updated</th>
+                <th>Status</th>
+                <th>Picks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pick in picks %}
+            <tr>
+                <td>{{ pick.user }}</td>
+                <td>{{ pick.discord_id }}</td>
+                <td class="{% if pick.is_final %}final-score{% else %}preliminary-score{% endif %}">
+                    {{ pick.score }}
+                </td>
+                <td>
+                    {% if pick.last_updated %}
+                        {{ pick.last_updated.strftime('%Y-%m-%d %H:%M:%S') }}
+                    {% else %}
+                        Not scored yet
+                    {% endif %}
+                </td>
+                <td>
+                    {% if pick.is_final %}
+                        Final
+                    {% else %}
+                        Preliminary
+                    {% endif %}
+                </td>
+                <td>
+                    <ol>
+                        {% for guild in pick.picks %}
+                            <li>{{ guild }}</li>
+                        {% endfor %}
+                    </ol>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+</body>
+</html>

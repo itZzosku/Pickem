@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Leaderboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .final-score {
+            color: green;
+            font-weight: bold;
+        }
+        .preliminary-score {
+            color: #666;
+            font-style: italic;
+        }
+        .current-rankings {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .score-status {
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            padding: 5px;
+            background-color: #e9ecef;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Leaderboard</h1>
+    
+    <div class="score-status">
+        {% if is_final %}
+            <p><strong>These are final scores</strong></p>
+        {% else %}
+            <p><em>These are preliminary scores based on current rankings</em></p>
+        {% if last_update %}
+            <p>Last updated: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}</p>
+        {% endif %}
+        {% if next_update %}
+            <p>Next update: {{ next_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}</p>
+        {% endif %}
+    {% endif %}
+</div>
+
+    {% if has_current_rankings %}
+    <div class="current-rankings">
+        <h2>Current Top 10 Guild Rankings</h2>
+        <ol>
+            {% for guild in current_rankings %}
+                <li>{{ guild }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Score</th>
+                <th>Picks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ result.user }}</td>
+                <td class="{% if result.final %}final-score{% else %}preliminary-score{% endif %}">
+                    {{ result.score }}
+                </td>
+                <td>
+                    <ol>
+                        {% for pick in result.picks %}
+                            <li>{{ pick }}</li>
+                        {% endfor %}
+                    </ol>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+</body>
+</html>

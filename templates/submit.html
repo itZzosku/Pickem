@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Submit Your Picks</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .rank-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .rank-label {
+            min-width: 90px;
+            font-weight: 500;
+        }
+        /* Select2 fixes */
+        .select2-container--default .select2-selection--single {
+            height: 40px !important;
+            border: 1px solid #ddd !important;
+            border-radius: 4px;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            padding: 0 12px !important;
+            display: flex !important;
+            align-items: center !important;
+            height: 100% !important;
+            line-height: normal !important;
+            color: #333 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #666 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 100% !important;
+            top: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+        }
+
+        .select2-container {
+            width: 100% !important;
+            max-width: 400px;
+        }
+
+        .select2-results__option {
+            padding: 8px 12px;
+            color: #333 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h1>Submit Your Pick'em</h1>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            {% for i in range(1, 11) %}
+            <div class="rank-container">
+                <label class="rank-label" for="rank{{ i }}">Rank {{ i }}</label>
+                <select class="guild-select" name="rank{{ i }}" id="rank{{ i }}" required>
+                    <option value="">Select a guild</option>
+                    {% for guild in guilds %}
+                    <option value="{{ guild }}" {% if current_user.pick and current_user.pick.picks[i-1] == guild %}selected{% endif %}>
+                        {{ guild }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+            <button type="submit">Submit</button>
+        </form>
+
+        <div class="back-link">
+            <a href="{{ url_for('index') }}">Back to home</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        // Initialize all guild options
+        const allGuilds = {{ guilds|tojson|safe }};
+        
+        function updateDropdownOptions() {
+            const selectedValues = new Set();
+            
+            // Collect all currently selected values
+            $('.guild-select').each(function() {
+                const value = $(this).val();
+                if (value) {
+                    selectedValues.add(value);
+                }
+            });
+            
+            // Update each dropdown's available options
+            $('.guild-select').each(function() {
+                const currentSelect = $(this);
+                const currentValue = currentSelect.val();
+                
+                // Store the current selection
+                const selectedOption = currentSelect.find('option:selected');
+                const selectedText = selectedOption.text();
+                
+                // Destroy and reinitialize Select2
+                currentSelect.select2('destroy');
+                
+                // Remove all options except the placeholder
+                currentSelect.find('option').not('[value=""]').remove();
+                
+                // Add back all guilds that aren't selected in other dropdowns
+                // or are selected in this dropdown
+                allGuilds.forEach(guild => {
+                    if (!selectedValues.has(guild) || guild === currentValue) {
+                        const option = new Option(guild, guild, false, guild === currentValue);
+                        currentSelect.append(option);
+                    }
+                });
+                
+                // Reinitialize Select2
+                currentSelect.select2({
+                    width: '100%',
+                    placeholder: "Select a guild",
+                    allowClear: true,
+                    theme: "classic",
+                    dropdownAutoWidth: true,
+                    minimumResultsForSearch: 0
+                });
+
+                // If there was a previous selection, restore it
+                if (currentValue) {
+                    currentSelect.val(currentValue).trigger('change.select2');
+                }
+            });
+        }
+
+        // Initialize Select2 for all dropdowns
+        $('.guild-select').select2({
+            width: '100%',
+            placeholder: "Select a guild",
+            allowClear: true,
+            theme: "classic",
+            dropdownAutoWidth: true,
+            minimumResultsForSearch: 0
+        });
+
+        // Update options when any select changes
+        $('.guild-select').on('change', function(e) {
+            updateDropdownOptions();
+        });
+
+        // Initial update to handle any pre-selected values
+        updateDropdownOptions();
+
+        // Form validation
+        $('form').on('submit', function(e) {
+            const selections = new Set();
+            let hasEmpty = false;
+
+            $('.guild-select').each(function() {
+                const value = $(this).val();
+                if (!value) {
+                    hasEmpty = true;
+                } else {
+                    selections.add(value);
+                }
+            });
+
+            if (hasEmpty) {
+                alert('Please select all positions');
+                e.preventDefault();
+                return;
+            }
+
+            if (selections.size !== 10) {
+                alert('Please select different guilds for each position');
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+</body>
+</html>
