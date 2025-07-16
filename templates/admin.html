@@ -59,6 +59,7 @@
             padding: 10px;
             border: 1px solid #ddd;
             text-align: left;
+            vertical-align: top;
         }
 
         th {
@@ -67,6 +68,16 @@
 
         tr:nth-child(even) {
             background-color: #f9f9f9;
+        }
+
+        .picks-list {
+            margin: 0;
+            padding: 0;
+            list-style-type: none;
+        }
+
+        .picks-list li {
+            margin-bottom: 5px;
         }
 
         a {
@@ -121,7 +132,13 @@
             <tr>
                 <td>{{ pick.user }}</td>
                 <td>{{ pick.discord_id }}</td>
-                <td>{{ pick.picks|join(', ') }}</td>
+                <td>
+                    <ul class="picks-list">
+                        {% for guild in pick.picks %}
+                        <li>{{ guild }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
                 <td>{{ pick.score }}</td>
                 <td>{{ pick.last_updated.strftime('%Y-%m-%d %H:%M:%S UTC') if pick.last_updated else 'Never' }}</td>
                 <td>{{ 'Yes' if pick.is_final else 'No' }}</td>
