@@ -38,13 +38,16 @@ try:
         logger.debug("Secret key present: %s", bool(app.secret_key))
         logger.debug("Database URI: %s", app.config["SQLALCHEMY_DATABASE_URI"])
         
-    # Start updates in a background thread
-    update_thread = threading.Thread(target=initialize_updates, daemon=True)
+    # Start updates in a background thread - Note: NOT using daemon=True here
+    update_thread = threading.Thread(target=initialize_updates)
     update_thread.start()
     
 except Exception as e:
     logger.error("Error during startup: %s", str(e))
     raise e
+
+# This ensures our application and thread management works with gunicorn
+application = app
 
 if __name__ == "__main__":
     app.run()
