@@ -106,7 +106,8 @@ def submit():
     with open(guilds_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    guild_list = [f"{g['name']} - {g['realm']}" for g in data["guilds"]]
+    guild_list = sorted([f"{g['name']} - {g['realm']}" for g in data["guilds"]],
+                        key=str.lower)
 
     if request.method == "POST":
         picks = [request.form.get(f"rank{i}") for i in range(1, 11)]
