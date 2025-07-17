@@ -41,6 +41,29 @@
             border-radius: 3px;
         }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function formatDate(date) {
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+            }
+
+            const timestamps = document.querySelectorAll('[data-timestamp]');
+            timestamps.forEach(function(element) {
+                const timestamp = element.getAttribute('data-timestamp');
+                if (timestamp && timestamp !== 'Never' && timestamp !== 'Unknown') {
+                    const utcDate = new Date(timestamp);
+                    const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+                    element.textContent = element.getAttribute('data-prefix') + formatDate(localDate);
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <h1>Leaderboard</h1>
@@ -50,14 +73,18 @@
             <p><strong>These are final scores</strong></p>
         {% else %}
             <p><em>These are preliminary scores based on current rankings</em></p>
-        {% if last_update %}
-            <p>Last updated: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}</p>
+            {% if last_update %}
+            <p><span data-timestamp="{{ last_update.isoformat() }}" data-prefix="Last Update: ">
+                Last Update: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+            </span></p>
+            {% endif %}
+            {% if next_update %}
+            <p><span data-timestamp="{{ next_update.isoformat() }}" data-prefix="Next Scheduled Update: ">
+                Next Scheduled Update: {{ next_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+            </span></p>
+            {% endif %}
         {% endif %}
-        {% if next_update %}
-            <p>Next update: {{ next_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}</p>
-        {% endif %}
-    {% endif %}
-</div>
+    </div>
 
     {% if has_current_rankings %}
     <div class="current-rankings">

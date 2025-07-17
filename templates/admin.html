@@ -89,6 +89,29 @@
             text-decoration: underline;
         }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function formatDate(date) {
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
+            }
+
+            const timestamps = document.querySelectorAll('[data-timestamp]');
+            timestamps.forEach(function(element) {
+                const timestamp = element.getAttribute('data-timestamp');
+                if (timestamp && timestamp !== 'Never' && timestamp !== 'Unknown') {
+                    const utcDate = new Date(timestamp);
+                    const localDate = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+                    element.textContent = element.getAttribute('data-prefix') + formatDate(localDate);
+                }
+            });
+        });
+    </script>
 </head>
 <body>
     <h1>Admin Panel</h1>
@@ -104,8 +127,12 @@
         {% endwith %}
         
         <div class="update-status">
-            <p>Last Update: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') if last_update else 'Never' }}</p>
-            <p>Next Scheduled Update: {{ next_update.strftime('%Y-%m-%d %H:%M:%S UTC') if next_update else 'Unknown' }}</p>
+            <p><span data-timestamp="{{ last_update.isoformat() if last_update else 'Never' }}" data-prefix="Last Update: ">
+                Last Update: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') if last_update else 'Never' }}
+            </span></p>
+            <p><span data-timestamp="{{ next_update.isoformat() if next_update else 'Unknown' }}" data-prefix="Next Scheduled Update: ">
+                Next Scheduled Update: {{ next_update.strftime('%Y-%m-%d %H:%M:%S UTC') if next_update else 'Unknown' }}
+            </span></p>
         </div>
 
         <form method="POST">
@@ -140,7 +167,11 @@
                     </ul>
                 </td>
                 <td>{{ pick.score }}</td>
-                <td>{{ pick.last_updated.strftime('%Y-%m-%d %H:%M:%S UTC') if pick.last_updated else 'Never' }}</td>
+                <td>
+                    <span data-timestamp="{{ pick.last_updated.isoformat() if pick.last_updated else 'Never' }}" data-prefix="">
+                        {{ pick.last_updated.strftime('%Y-%m-%d %H:%M:%S UTC') if pick.last_updated else 'Never' }}
+                    </span>
+                </td>
                 <td>{{ 'Yes' if pick.is_final else 'No' }}</td>
             </tr>
             {% endfor %}
