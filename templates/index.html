@@ -4,28 +4,146 @@
     <meta charset="UTF-8" />
     <title>Finnish Guilds Pick'em</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .welcome-message {
+            text-align: center;
+            font-size: 1.2em;
+            color: #34495e;
+            margin-bottom: 25px;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .nav-item {
+            text-align: center;
+        }
+
+        .nav-item a {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            width: 200px;
+        }
+
+        .nav-item a:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .admin-nav {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .admin-nav .nav-item a {
+            background-color: #e74c3c;
+        }
+
+        .admin-nav .nav-item a:hover {
+            background-color: #c0392b;
+        }
+
+        .login-section {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .login-section a {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #7289da;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            transition: background-color 0.3s ease;
+        }
+
+        .login-section a:hover {
+            background-color: #5f73bc;
+        }
+
+        .utility-nav {
+            margin-top: 20px;
+        }
+
+        .utility-nav .nav-item a {
+            background-color: #95a5a6;
+            font-size: 0.9em;
+        }
+
+        .utility-nav .nav-item a:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to Finnish Guilds Pick'em!</h1>
+    <div class="container">
+        <h1>Welcome to Finnish Guilds Pick'em!</h1>
 
-    {% if user.is_authenticated %}
-        <p>Hello, {{ user.discord_username }}!</p>
-        <p><a href="{{ url_for('submit') }}">Make your picks</a></p>
-        <p><a href="{{ url_for('leaderboard') }}">View leaderboard</a></p>
-        <p><a href="{{ url_for('rankings') }}">View Guild Rankings</a></p>
-        <p><a href="{{ url_for('logout') }}">Logout</a></p>
-    {% else %}
-        <p><a href="{{ url_for('discord.login') }}">Login with Discord</a> to participate.</p>
-    {% endif %}
-    {% if current_user.is_authenticated and current_user.is_admin %}
-<div class="nav-item">
-    <a href="{{ url_for('admin') }}">Admin Panel</a>
-</div>
-{% endif %}
-{% if current_user.is_authenticated %}
-<div class="nav-item">
-    <a href="{{ url_for('my_id') }}">View My Discord ID</a>
-</div>
-{% endif %}
+        {% if user.is_authenticated %}
+            <div class="welcome-message">
+                <p>Hello, {{ user.discord_username }}!</p>
+            </div>
+            
+            <div class="nav-menu">
+                <div class="nav-item">
+                    <a href="{{ url_for('submit') }}">Make your picks</a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('leaderboard') }}">View leaderboard</a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('rankings') }}">View Guild Rankings</a>
+                </div>
+                <div class="nav-item">
+                    <a href="{{ url_for('logout') }}">Logout</a>
+                </div>
+            </div>
+
+            {% if current_user.is_admin %}
+            <div class="admin-nav">
+                <div class="nav-item">
+                    <a href="{{ url_for('admin') }}">Admin Panel</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="utility-nav">
+                <div class="nav-item">
+                    <a href="{{ url_for('my_id') }}">View My Discord ID</a>
+                </div>
+            </div>
+        {% else %}
+            <div class="login-section">
+                <a href="{{ url_for('discord.login') }}">Login with Discord</a>
+            </div>
+        {% endif %}
+    </div>
 </body>
 </html>

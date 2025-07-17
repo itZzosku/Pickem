@@ -109,13 +109,18 @@ def submit():
     guild_list = sorted([f"{g['name']} - {g['realm']}" for g in data["guilds"]],
                         key=str.lower)
 
+    # Get existing picks if they exist
+    existing_picks = None
+    existing = Pick.query.filter_by(user_id=current_user.id).first()
+    if existing:
+        existing_picks = existing.picks
+
     if request.method == "POST":
         picks = [request.form.get(f"rank{i}") for i in range(1, 11)]
         if len(set(picks)) != 10:
             flash("Each guild must be unique!")
             return redirect(url_for("submit"))
 
-        existing = Pick.query.filter_by(user_id=current_user.id).first()
         if existing:
             existing.picks = picks
         else:
@@ -123,21 +128,13 @@ def submit():
             db.session.add(new_pick)
         db.session.commit()
 
-        # # Trigger rankings update in background
-        # def update_after_submit():
-        #     with app.app_context():
-        #         run_async_update(DEFAULT_RAID_SLUG)
-        #         from updater import update_user_scores
-        #         update_user_scores()  # Update scores after rankings
-
-        # update_thread = threading.Thread(target=update_after_submit)
-        # update_thread.daemon = True
-        # update_thread.start()
-
         flash("Pick submitted! Rankings will be updated shortly.")
         return redirect(url_for("leaderboard"))
 
-    return render_template("submit.html", guilds=guild_list, user=current_user)
+    return render_template("submit.html", 
+                         guilds=guild_list, 
+                         user=current_user, 
+                         existing_picks=existing_picks)
 
 
 @app.route("/leaderboard")

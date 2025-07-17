@@ -2,43 +2,176 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Leaderboard</title>
+    <title>Leaderboard - Finnish Guilds Pick'em</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        table {
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .nav-button {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .nav-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .home-button {
+            background-color: #95a5a6;
+        }
+
+        .home-button:hover {
+            background-color: #7f8c8d;
+        }
+
+        .current-rankings {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .current-rankings h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: none;
+        }
+
+        .current-rankings ol {
+            margin: 0;
+            padding-left: 20px;
+            columns: 2;
+            column-gap: 40px;
+        }
+
+        .current-rankings li {
+            color: #34495e;
+            padding: 5px 0;
+            break-inside: avoid;
+        }
+
+        .status-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-section p {
+            margin: 5px 0;
+            color: #34495e;
+        }
+
+        .leaderboard {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
         }
-        th, td {
-            padding: 8px;
+
+        .leaderboard th, .leaderboard td {
+            padding: 12px;
             text-align: left;
-            border: 1px solid #ddd;
+            border-bottom: 1px solid #e1e4e8;
         }
-        th {
-            background-color: #f2f2f2;
-        }
-        .final-score {
-            color: green;
+
+        .leaderboard th {
+            background-color: #f1f4f9;
+            color: #2c3e50;
             font-weight: bold;
         }
-        .preliminary-score {
-            color: #666;
-            font-style: italic;
-        }
-        .current-rankings {
-            margin: 20px 0;
-            padding: 15px;
+
+        .leaderboard tr:nth-child(even) {
             background-color: #f8f9fa;
-            border: 1px solid #ddd;
-            border-radius: 5px;
         }
-        .score-status {
+
+        .leaderboard tr:hover {
+            background-color: #e8f4f8;
+        }
+
+        .rank-column {
+            width: 60px;
+            text-align: center;
+        }
+
+        .pick-item {
+            display: block;
+            padding: 4px 8px;
+            margin: 2px 0;
+            border-radius: 4px;
             font-size: 0.9em;
-            margin-bottom: 15px;
-            padding: 5px;
-            background-color: #e9ecef;
-            border-radius: 3px;
+            color: #2c3e50;
+            background-color: #e1e4e8;
+        }
+
+        .current-pick {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .update-time {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .current-rankings ol {
+                columns: 1;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+
+            .nav-button {
+                width: 100%;
+            }
         }
     </style>
     <script>
@@ -66,66 +199,72 @@
     </script>
 </head>
 <body>
-    <h1>Leaderboard</h1>
-    
-    <div class="score-status">
-        {% if is_final %}
-            <p><strong>These are final scores</strong></p>
-        {% else %}
-            <p><em>These are preliminary scores based on current rankings</em></p>
-            {% if last_update %}
-            <p><span data-timestamp="{{ last_update.isoformat() }}" data-prefix="Last Update: ">
-                Last Update: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}
-            </span></p>
+    <div class="container">
+        <h1>Leaderboard</h1>
+
+        <div class="nav-buttons">
+            <a href="{{ url_for('index') }}" class="nav-button home-button">Back to Home</a>
+            <a href="{{ url_for('submit') }}" class="nav-button">Make Picks</a>
+        </div>
+
+        {% if has_current_rankings %}
+        <div class="current-rankings">
+            <h2>Current Top 10 Guilds</h2>
+            <ol>
+                {% for guild in current_rankings %}
+                    <li>{{ guild }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+        {% endif %}
+
+        <div class="status-section">
+            {% if is_final %}
+                <p><strong>Final Results</strong></p>
+            {% else %}
+                <p><strong>Current Standings</strong></p>
+                {% if next_update %}
+                    <div data-timestamp="{{ next_update.isoformat() }}" data-prefix="Next update: ">
+                        Next update: {{ next_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+                    </div>
+                {% endif %}
             {% endif %}
-            {% if next_update %}
-            <p><span data-timestamp="{{ next_update.isoformat() }}" data-prefix="Next Scheduled Update: ">
-                Next Scheduled Update: {{ next_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}
-            </span></p>
-            {% endif %}
+        </div>
+
+        <div class="leaderboard">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="rank-column">Rank</th>
+                        <th>Player</th>
+                        <th>Score</th>
+                        <th>Picks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td class="rank-column">{{ loop.index }}</td>
+                        <td>{{ result.user }}</td>
+                        <td>{{ result.score }}</td>
+                        <td>
+                            {% for pick in result.picks %}
+                                <span class="pick-item {% if current_rankings and pick in current_rankings %}current-pick{% endif %}">
+                                    {{ loop.index }}. {{ pick }}
+                                </span>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if last_update %}
+        <div class="update-time" data-timestamp="{{ last_update.isoformat() }}" data-prefix="Last updated: ">
+            Last updated: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') }}
+        </div>
         {% endif %}
     </div>
-
-    {% if has_current_rankings %}
-    <div class="current-rankings">
-        <h2>Current Top 10 Guild Rankings</h2>
-        <ol>
-            {% for guild in current_rankings %}
-                <li>{{ guild }}</li>
-            {% endfor %}
-        </ol>
-    </div>
-    {% endif %}
-
-    <table>
-        <thead>
-            <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Score</th>
-                <th>Picks</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for result in results %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ result.user }}</td>
-                <td class="{% if result.final %}final-score{% else %}preliminary-score{% endif %}">
-                    {{ result.score }}
-                </td>
-                <td>
-                    <ol>
-                        {% for pick in result.picks %}
-                            <li>{{ pick }}</li>
-                        {% endfor %}
-                    </ol>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
 </body>
 </html>

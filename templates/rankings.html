@@ -5,33 +5,113 @@
     <title>Finnish Guild Rankings</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        .rankings-container {
-            max-width: 800px;
+        .container {
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            font-family: Arial, sans-serif;
         }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .nav-button {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .nav-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .home-button {
+            background-color: #95a5a6;
+        }
+
+        .home-button:hover {
+            background-color: #7f8c8d;
+        }
+
         .rankings-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
+
         .rankings-table th,
         .rankings-table td {
             padding: 10px;
-            border: 1px solid #ddd;
             text-align: left;
+            border-bottom: 1px solid #e1e4e8;
         }
+
         .rankings-table th {
-            background-color: #f5f5f5;
+            background-color: #f1f4f9;
+            color: #2c3e50;
+            font-weight: bold;
         }
+
         .rankings-table tr:nth-child(even) {
-            background-color: #f9f9f9;
+            background-color: #f8f9fa;
         }
+
+        .rankings-table tr:hover {
+            background-color: #e8f4f8;
+        }
+
         .last-updated {
-            text-align: right;
-            color: #666;
-            font-style: italic;
+            font-size: 0.9em;
+            color: #7f8c8d;
+            text-align: center;
             margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .rankings-table th,
+            .rankings-table td {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+
+            .nav-button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
         }
     </style>
     <script>
@@ -59,8 +139,14 @@
     </script>
 </head>
 <body>
-    <div class="rankings-container">
+    <div class="container">
         <h1>Top 25 Finnish Guilds</h1>
+        
+        <div class="nav-buttons">
+            <a href="{{ url_for('index') }}" class="nav-button home-button">Back to Home</a>
+            <a href="{{ url_for('leaderboard') }}" class="nav-button">View Leaderboard</a>
+        </div>
+
         <table class="rankings-table">
             <thead>
                 <tr>
@@ -76,19 +162,19 @@
                 <tr>
                     <td>{{ loop.index }}</td>
                     <td>{{ guild.name }}</td>
-                    <td>{{ guild.realm }}</td>
+                    <td>{{ guild.realm|title }}</td>
                     <td>{{ guild.rank if guild.rank != 999999 else "N/A" }}</td>
                     <td>{{ guild.mythic_bosses_killed }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+
         {% if guilds %}
         <div class="last-updated" data-timestamp="{{ guilds[0].last_updated.isoformat() }}" data-prefix="Last updated: ">
             Last updated: {{ guilds[0].last_updated.strftime('%Y-%m-%d %H:%M UTC') }}
         </div>
         {% endif %}
-        <p><a href="{{ url_for('index') }}">Back to Home</a></p>
     </div>
 </body>
 </html>
