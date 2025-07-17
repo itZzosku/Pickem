@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Picks - Finnish Guilds Pick'em</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+            font-size: 2em;
+        }
+
+        .picks-form {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .pick-group {
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            border: 1px solid #e1e4e8;
+            display: flex;
+            align-items: center;
+        }
+
+        .pick-group label {
+            color: #34495e;
+            font-weight: bold;
+            font-size: 1.2em;
+            width: 70px;
+        }
+
+        .pick-value {
+            flex: 1;
+            padding: 10px;
+            font-size: 1.1em;
+            color: #2c3e50;
+        }
+
+        .home-link {
+            padding: 12px 25px;
+            background-color: #95a5a6;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            transition: background-color 0.3s ease;
+            display: block;
+            width: fit-content;
+            margin: 20px auto;
+        }
+
+        .home-link:hover {
+            background-color: #7f8c8d;
+        }
+
+        .deadline-info {
+            text-align: center;
+            margin: 20px 0;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .deadline-message {
+            font-size: 1.2em;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .deadline-message.closed {
+            color: #721c24;
+            background-color: #f8d7da;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .instructions {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            border-radius: 4px;
+            font-size: 1.1em;
+        }
+
+        .instructions p {
+            margin: 0;
+            color: #34495e;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Picks</h1>
+
+        <div class="instructions">
+            <p>These were your submitted picks for the competition</p>
+        </div>
+
+        <div class="picks-form">
+            {% for i in range(1, 11) %}
+            <div class="pick-group">
+                <label for="rank{{ i }}">#{{ i }}</label>
+                <div class="pick-value">
+                    {% if existing_picks and existing_picks[i-1] %}
+                        {{ existing_picks[i-1] }}
+                    {% else %}
+                        No pick submitted
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="deadline-info">
+            {% if current_time > submission_deadline %}
+                <div class="deadline-message closed">
+                    <strong>Submissions are now closed!</strong>
+                </div>
+            {% else %}
+                <div class="deadline-message">
+                    <strong>Submissions close on:</strong> {{ submission_deadline.strftime('%Y-%m-%d %H:%M:%S UTC') }}<br>
+                    <strong>Time remaining:</strong> {{ (submission_deadline - current_time).days }} days,
+                    {{ ((submission_deadline - current_time).seconds // 3600) }} hours
+                </div>
+            {% endif %}
+        </div>
+
+        <a href="{{ url_for('index') }}" class="home-link">Back to Home</a>
+    </div>
+</body>
+</html>

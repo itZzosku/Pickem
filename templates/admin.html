@@ -11,25 +11,67 @@
             padding: 20px;
         }
         
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
         .admin-controls {
             background: #f5f5f5;
             padding: 20px;
             margin: 20px 0;
             border-radius: 5px;
+            text-align: center;
+        }
+
+        .admin-controls h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .admin-button {
+            display: inline-block;
+            padding: 12px 24px;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: all 0.3s ease;
+            width: 200px;
+        }
+
+        .admin-button:hover {
+            transform: translateY(-2px);
         }
 
         .update-button {
-            background: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
+            background-color: #3498db;
         }
 
         .update-button:hover {
-            background: #45a049;
+            background-color: #2980b9;
+        }
+
+        .finalize-button {
+            background-color: #e74c3c;
+        }
+
+        .finalize-button:hover {
+            background-color: #c0392b;
+        }
+
+        .unfinalize-button {
+            background-color: #f39c12;
+        }
+
+        .unfinalize-button:hover {
+            background-color: #d68910;
         }
 
         .flash-message {
@@ -53,6 +95,10 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
 
         th, td {
@@ -64,6 +110,7 @@
 
         th {
             background-color: #f5f5f5;
+            color: #2c3e50;
         }
 
         tr:nth-child(even) {
@@ -80,13 +127,23 @@
             margin-bottom: 5px;
         }
 
-        a {
-            color: #2196F3;
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #3498db;
             text-decoration: none;
         }
 
-        a:hover {
+        .back-link:hover {
             text-decoration: underline;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
         }
     </style>
     <script>
@@ -115,7 +172,7 @@
 </head>
 <body>
     <h1>Admin Panel</h1>
-    
+
     <div class="admin-controls">
         <h2>Update Controls</h2>
         {% with messages = get_flashed_messages() %}
@@ -125,7 +182,7 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-        
+
         <div class="update-status">
             <p><span data-timestamp="{{ last_update.isoformat() if last_update else 'Never' }}" data-prefix="Last Update: ">
                 Last Update: {{ last_update.strftime('%Y-%m-%d %H:%M:%S UTC') if last_update else 'Never' }}
@@ -135,11 +192,27 @@
             </span></p>
         </div>
 
-        <form method="POST">
-            <button type="submit" name="force_update" value="1" class="update-button">
-                Force Update Now
-            </button>
-        </form>
+        <div class="button-group">
+            <form method="POST">
+                <button type="submit" name="force_update" value="1" class="admin-button update-button">
+                    Force Update Now
+                </button>
+            </form>
+
+            <form method="POST" action="{{ url_for('finalize_rankings') }}">
+                <button type="submit" class="admin-button finalize-button"
+                        onclick="return confirm('Are you sure you want to finalize the rankings? This will lock in the current standings as final.');">
+                    Finalize Rankings
+                </button>
+            </form>
+
+            <form action="{{ url_for('unfinalize_rankings') }}" method="POST">
+                <button type="submit" class="admin-button unfinalize-button"
+                        onclick="return confirm('Are you sure you want to unfinalize the rankings? This will allow rankings to be updated again.');">
+                    Unfinalize Rankings
+                </button>
+            </form>
+        </div>
     </div>
 
     <h2>User Picks</h2>
@@ -178,6 +251,6 @@
         </tbody>
     </table>
 
-    <p><a href="{{ url_for('index') }}">Back to Home</a></p>
+    <p><a href="{{ url_for('index') }}" class="back-link">Back to Home</a></p>
 </body>
 </html>

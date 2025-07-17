@@ -1,10 +1,11 @@
-from flask import Flask, redirect, url_for, session, render_template, abort
+from flask import Flask, redirect, url_for, session, render_template, abort, flash
 from authlib.integrations.flask_client import OAuth
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import SQLAlchemyError
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from functools import wraps
 
-from models import db, User, Pick, GuildRanking, ActualResult, UpdateStatus  # Add UpdateStatus here
+from models import db, User, Pick, GuildRanking, ActualResult, UpdateStatus, UserScore  # Add UserScore here
 from datetime import datetime, timedelta, timezone
 from auth import discord_blueprint, oauth, fetch_user_info
 from scoring import calculate_score
@@ -18,8 +19,10 @@ import os
 from dotenv import load_dotenv
 from updater import periodic_update
 
-
 load_dotenv()
+
+SUBMISSION_DEADLINE = datetime.strptime(os.getenv('SUBMISSION_DEADLINE', '2025-12-31 23:59:59'),
+                                        '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
 
 def run_async_update(raid_slug=None):
@@ -62,7 +65,7 @@ def load_user(user_id):
 # Initialize everything within the app context
 with app.app_context():
     db.create_all()
-    
+
     # Create initial update status if it doesn't exist
     update_status = UpdateStatus.query.first()
     if update_status is None:
@@ -78,7 +81,7 @@ with app.app_context():
         except Exception as e:
             print(f"Error creating initial update status: {e}")
             db.session.rollback()
-    
+
     # Only run the initial update if this is the main process
     if not os.environ.get('WERKZEUG_RUN_MAIN'):
         def run_initial():
@@ -86,7 +89,8 @@ with app.app_context():
                 run_async_update(DEFAULT_RAID_SLUG)
                 from updater import update_user_scores
                 update_user_scores()
-        
+
+
         update_thread = threading.Thread(target=run_initial, daemon=True)
         update_thread.start()
 
@@ -100,6 +104,11 @@ def index():
 @login_required
 def submit():
     from flask import request, flash
+
+    # Check if submission deadline has passed
+    current_time = datetime.now(timezone.utc)
+    if current_time > SUBMISSION_DEADLINE:
+        return redirect(url_for("view_picks"))
 
     # Load guild list from guilds/finnish_guilds.json
     guilds_path = os.path.join("guilds", "finnish_guilds.json")
@@ -131,10 +140,12 @@ def submit():
         flash("Pick submitted! Rankings will be updated shortly.")
         return redirect(url_for("leaderboard"))
 
-    return render_template("submit.html", 
-                         guilds=guild_list, 
-                         user=current_user, 
-                         existing_picks=existing_picks)
+    return render_template("submit.html",
+                           guilds=guild_list,
+                           user=current_user,
+                           existing_picks=existing_picks,
+                           submission_deadline=SUBMISSION_DEADLINE,
+                           current_time=current_time)
 
 
 @app.route("/leaderboard")
@@ -195,7 +206,7 @@ def leaderboard():
 def admin():
     from models import UserScore
     from flask import request, flash
-    
+
     # Handle force update
     if request.method == 'POST' and 'force_update' in request.form:
         def force_update():
@@ -203,7 +214,7 @@ def admin():
                 run_async_update(DEFAULT_RAID_SLUG)
                 from updater import update_user_scores
                 update_user_scores()
-        
+
         update_thread = threading.Thread(target=force_update)
         update_thread.start()
         flash("Force update initiated. Rankings will be updated shortly.")
@@ -229,16 +240,16 @@ def admin():
         })
 
     picks_data.sort(key=lambda x: x["score"], reverse=True)
-    
+
     # Get update status
     update_status = UpdateStatus.query.first()
     next_update = update_status.next_update if update_status else None
     last_update = update_status.last_update if update_status else None
 
-    return render_template("admin.html", 
-                         picks=picks_data, 
-                         next_update=next_update,
-                         last_update=last_update)
+    return render_template("admin.html",
+                           picks=picks_data,
+                           next_update=next_update,
+                           last_update=last_update)
 
 
 @app.route("/logout")
@@ -276,6 +287,95 @@ def trigger_rankings_update():
     return "Invalid raid selected", 400
 
 
+@app.route("/finalize", methods=['POST'])
+@login_required
+@admin_required
+def finalize_rankings():
+    # Get the final rankings
+    final_rankings = GuildRanking.query.order_by(
+        GuildRanking.mythic_bosses_killed.desc(),
+        GuildRanking.rank
+    ).limit(10).all()
+
+    if not final_rankings:
+        flash("No rankings available to finalize")
+        return redirect(url_for('admin'))
+
+    # Create ActualResult if it doesn't exist
+    try:
+        actual = ActualResult.query.first()
+        if actual:
+            flash("Rankings have already been finalized")
+            return redirect(url_for('admin'))
+
+        actual = ActualResult(picks=[f"{g.name} - {g.realm}" for g in final_rankings])
+        db.session.add(actual)
+
+        # Mark all current scores as final
+        scores = UserScore.query.all()
+        for score in scores:
+            score.is_final = True
+
+        db.session.commit()
+        flash("Rankings have been finalized!")
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        flash(f"Error finalizing rankings: {str(e)}")
+
+    return redirect(url_for('admin'))
+
+
+@app.route("/view_picks")
+@login_required
+def view_picks():
+    current_time = datetime.now(timezone.utc)
+
+    # Load guild list from guilds/finnish_guilds.json
+    guilds_path = os.path.join("guilds", "finnish_guilds.json")
+    with open(guilds_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    guild_list = sorted([f"{g['name']} - {g['realm']}" for g in data["guilds"]],
+                        key=str.lower)
+
+    # Get existing picks if they exist
+    existing_picks = None
+    existing = Pick.query.filter_by(user_id=current_user.id).first()
+    if existing:
+        existing_picks = existing.picks
+
+    return render_template("view_picks.html",
+                           guilds=guild_list,
+                           user=current_user,
+                           existing_picks=existing_picks,
+                           submission_deadline=SUBMISSION_DEADLINE,
+                           current_time=current_time)
+
+
+@app.route("/unfinalize_rankings", methods=['POST'])
+@login_required
+@admin_required
+def unfinalize_rankings():
+    try:
+        # Delete ActualResult
+        ActualResult.query.delete()
+
+        # Set all scores back to non-final
+        scores = UserScore.query.all()
+        for score in scores:
+            score.is_final = False
+
+        db.session.commit()
+        flash("Rankings have been unfinalized successfully!")
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        flash(f"Error unfinalizing rankings: {str(e)}")
+
+    return redirect(url_for('admin'))
+
+
 if __name__ == "__main__":
     def initial_update():
         with app.app_context():
@@ -285,10 +385,12 @@ if __name__ == "__main__":
             update_user_scores()
             print("Initial update completed")
 
+
     def start_periodic_update():
         with app.app_context():
             print("Starting periodic update service...")
             periodic_update(app, 300)
+
 
     # Start both initial and periodic updates
     if not os.environ.get('WERKZEUG_RUN_MAIN'):
