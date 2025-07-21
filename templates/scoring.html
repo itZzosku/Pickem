@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Scoring System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        .nav-button {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .nav-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .home-button {
+            background-color: #95a5a6;
+        }
+
+        .home-button:hover {
+            background-color: #7f8c8d;
+        }
+
+        .scoring-section {
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.scoring-section h2 {
+    color: #333;
+    margin-top: 0;
+}
+
+.scoring-section ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.scoring-section li {
+    margin: 10px 0;
+    padding: 8px;
+    background-color: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.scoring-example {
+    background-color: #e8f4ff;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.scoring-example ol {
+    padding-left: 20px;
+}
+
+.scoring-example p:last-child {
+    font-weight: bold;
+    color: #2c5282;
+}
+
+.scoring-tips {
+    background-color: #f0fff4;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.scoring-tips ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+
+strong {
+    color: #2c5282;
+}
+
+        .scoring-section h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .rules-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .rules-list li {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .rules-list li:last-child {
+            border-bottom: none;
+        }
+
+        .points {
+            font-weight: bold;
+            color: #3498db;
+        }
+
+        .example-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .example-table th,
+        .example-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e4e8;
+        }
+
+        .example-table th {
+            background-color: #f1f4f9;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        .example-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .example-table tr:hover {
+            background-color: #e8f4f8;
+        }
+
+        .total-score {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f1f4f9;
+            border-radius: 5px;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+
+            .nav-button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .example-table th,
+            .example-table td {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Scoring System</h1>
+
+        <div class="nav-buttons">
+            <a href="{{ url_for('index') }}" class="nav-button home-button">Back to Home</a>
+            <a href="{{ url_for('leaderboard') }}" class="nav-button">View Leaderboard</a>
+        </div>
+
+        <div class="scoring-section">
+            <h2>Scoring Rules & Streak Bonuses</h2>
+            <ul class="rules-list">
+                <li>
+                    <span class="points">Base Points</span>
+                    <ul>
+                        <li>10 points - Exact position match</li>
+                        <li>5 points - Off by one position</li>
+                        <li>2 points - Guild in Top 10 but wrong position</li>
+                    </ul>
+                </li>
+                <li>
+                    <span class="points">Streak Multipliers</span>
+                    <ul>
+                        <li>First correct prediction: base score (10 points)</li>
+                        <li>Second consecutive correct: 1.5x multiplier (15 points)</li>
+                        <li>Third consecutive correct: 1.75x multiplier (18 points)</li>
+                        <li>Fourth and subsequent correct: 2x multiplier (20 points)</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="scoring-section">
+            <h2>Example Calculation</h2>
+            <table class="example-table">
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Actual Result</th>
+                        <th>Your Pick</th>
+                        <th>Base Points</th>
+                        <th>Streak</th>
+                        <th>Final Points</th>
+                        <th>Explanation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Slack - Stormreaver</td>
+                        <td>Slack - Stormreaver</td>
+                        <td>10</td>
+                        <td>None</td>
+                        <td>10</td>
+                        <td>Exact match</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Tony Halme Pro Skater - Stormreaver</td>
+                        <td>Tony Halme Pro Skater - Stormreaver</td>
+                        <td>10</td>
+                        <td>1.5x</td>
+                        <td>15</td>
+                        <td>Exact match + 2nd in streak</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Muisted - Stormreaver</td>
+                        <td>Muisted - Stormreaver</td>
+                        <td>10</td>
+                        <td>1.75x</td>
+                        <td>18</td>
+                        <td>Exact match + 3rd in streak</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>Forbidden - Vashj</td>
+                        <td>Forbidden - Vashj</td>
+                        <td>10</td>
+                        <td>2x</td>
+                        <td>20</td>
+                        <td>Exact match + 4th in streak</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Noni - Stormreaver</td>
+                        <td>Muisted - Stormreaver</td>
+                        <td>2</td>
+                        <td>Broken</td>
+                        <td>2</td>
+                        <td>Wrong position, streak broken</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="total-score">
+                Total Score: 65 points (10 + 15 + 18 + 20 + 2)
+                <br>
+                <small>The streak multiplier increases with consecutive correct predictions and resets when broken</small>
+            </div>
+        </div>
+
+        <div class="scoring-section">
+            <h2>Important Notes</h2>
+            <ul class="rules-list">
+                <li>Guild names must match exactly, including realm name (e.g., "Slack - Stormreaver")</li>
+                <li>Streak multipliers only apply to exact position matches</li>
+                <li>A streak breaks if you don't get an exact position match</li>
+                <li>Scores are updated automatically every 5 minutes based on current progress</li>
+                <li>Rankings become final when the race is completed and an admin finalizes the results</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

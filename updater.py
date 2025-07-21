@@ -31,7 +31,10 @@ def update_user_scores():
         
         db.session.commit()
         
-        current_rankings = GuildRanking.query.order_by(
+        # Modified to filter out guilds with 0 kills
+        current_rankings = GuildRanking.query.filter(
+            GuildRanking.mythic_bosses_killed > 0
+        ).order_by(
             GuildRanking.mythic_bosses_killed.desc(),
             GuildRanking.rank
         ).limit(10).all()

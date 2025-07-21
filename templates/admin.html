@@ -74,6 +74,14 @@
             background-color: #d68910;
         }
 
+        .reset-score-button {
+            background-color: #f39c12;
+        }
+
+        .reset-score-button:hover {
+            background-color: #d68910;
+        }
+
         .flash-message {
             padding: 10px;
             margin: 10px 0;
@@ -210,6 +218,12 @@
                 <button type="submit" class="admin-button unfinalize-button"
                         onclick="return confirm('Are you sure you want to unfinalize the rankings? This will allow rankings to be updated again.');">
                     Unfinalize Rankings
+                </button>
+            </form>
+            <form action="{{ url_for('reset_scores') }}" method="POST">
+                <button type="submit" class="admin-button reset-score-button"
+                        onclick="return confirm('Are you sure you want to reset all scores? This cannot be undone.')">
+                    Reset All Scores
                 </button>
             </form>
         </div>

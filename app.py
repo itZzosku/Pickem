@@ -171,13 +171,16 @@ def leaderboard():
 
     results.sort(key=lambda x: x["score"], reverse=True)
 
-    current_rankings = GuildRanking.query.order_by(
+    # Modified query to exclude guilds with 0 kills
+    current_rankings = GuildRanking.query.filter(
+        GuildRanking.mythic_bosses_killed > 0
+    ).order_by(
         GuildRanking.mythic_bosses_killed.desc(),
         GuildRanking.rank
     ).limit(10).all()
+    
     current_top10 = [f"{g.name} - {g.realm}" for g in current_rankings]
 
-    # Get update status with debug printing
     update_status = UpdateStatus.query.first()
     next_update = None
     last_update = None
@@ -266,7 +269,9 @@ def my_id():
 
 @app.route("/rankings")
 def rankings():
-    guilds = GuildRanking.query.order_by(
+    guilds = GuildRanking.query.filter(
+        GuildRanking.mythic_bosses_killed > 0
+    ).order_by(
         GuildRanking.mythic_bosses_killed.desc(),
         GuildRanking.rank
     ).limit(25).all()
@@ -374,6 +379,37 @@ def unfinalize_rankings():
         flash(f"Error unfinalizing rankings: {str(e)}")
 
     return redirect(url_for('admin'))
+
+
+@app.route("/reset-scores", methods=['POST'])
+@login_required
+@admin_required
+def reset_scores():
+    try:
+        # Delete all scores
+        UserScore.query.delete()
+        db.session.commit()
+
+        # Force an immediate update of scores
+        def force_update():
+            with app.app_context():
+                from updater import update_user_scores
+                update_user_scores()
+
+        update_thread = threading.Thread(target=force_update)
+        update_thread.start()
+
+        flash("Scores have been reset and will be recalculated shortly.")
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        flash(f"Error resetting scores: {str(e)}")
+
+    return redirect(url_for('admin'))
+
+
+@app.route("/scoring")
+def scoring_system():
+    return render_template("scoring.html")
 
 
 if __name__ == "__main__":

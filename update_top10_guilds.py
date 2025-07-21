@@ -6,13 +6,18 @@ from datetime import datetime, timezone
 from urllib.parse import quote, quote_plus
 from models import db, GuildRanking
 from typing import Optional
+from dotenv import load_dotenv
 
-DEFAULT_RAID_SLUG = "liberation-of-undermine"
+load_dotenv()
+
+
 AVAILABLE_RAIDS = {
+    "nerubar": "nerubar-palace",
     "liberation": "liberation-of-undermine",
-    "aberrus": "aberrus-the-shadowed-crucible",
-    "vault": "vault-of-the-incarnates"
+    "manaforge": "manaforge-omega"
 }
+
+DEFAULT_RAID_SLUG = os.getenv('DEFAULT_RAID_SLUG', 'manaforge-omega')
 
 
 async def fetch_guild_rank(session: aiohttp.ClientSession, region: str, realm: str, name: str, raid_slug: str) -> dict:
